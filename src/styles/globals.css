@@ -2,32 +2,50 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --foreground-rgb: 0, 0, 0;
-  --background-start-rgb: 214, 219, 220;
-  --background-end-rgb: 255, 255, 255;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --foreground-rgb: 255, 255, 255;
-    --background-start-rgb: 0, 0, 0;
-    --background-end-rgb: 0, 0, 0;
-  }
-}
-
 body {
-  color: rgb(var(--foreground-rgb));
-  background: linear-gradient(
-      to bottom,
-      transparent,
-      rgb(var(--background-end-rgb))
-    )
-    rgb(var(--background-start-rgb));
+  @apply p-6;
 }
 
-@layer utilities {
-  .text-balance {
-    text-wrap: balance;
-  }
+h1 {
+  @apply text-xl font-bold;
+}
+
+h2 {
+  @apply text-lg font-bold;
+}
+
+p {
+  @apply max-w-64 min-w-0 truncate;
+}
+
+form {
+  @apply p-6 border border-zinc-300;
+}
+
+label {
+  @apply block;
+}
+
+article {
+  @apply p-2 rounded-md border border-zinc-300 max-w-64 w-full;
+}
+
+input {
+  @apply h-9 px-4 rounded border border-zinc-300 bg-zinc-100 text-sm;
+}
+
+section {
+  @apply flex flex-wrap gap-2 w-full;
+}
+
+button {
+  @apply flex items-center h-9 px-4 rounded border border-neutral-700 bg-black text-sm text-white hover:bg-neutral-800 focus:ring-2 focus:ring-offset-1 focus:ring-black disabled:bg-neutral-700;
+}
+
+input[type="checkbox"] {
+  @apply w-6 h-6 border-2 border-blue-500 rounded-sm bg-white mt-1;
+}
+
+strong {
+  @apply text-lg/none font-semibold py-1 px-3 rounded-md bg-red-900/70 text-red-200;
 }

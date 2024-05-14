@@ -1,0 +1,5 @@
+{
+  "semi": false,
+  "singleAttributePerLine": true,
+  "arrowParens": "avoid"
+}
