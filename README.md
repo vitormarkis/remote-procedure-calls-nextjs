@@ -1,40 +1,83 @@
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+Alguma dúvida ou problema? Entre em contato comigo ou abra uma PR.
 
-## Getting Started
+1. Mover pasta `vmarkis` para pasta `src/` do seu projeto.
+2. Criar catch all route handler:
 
-First, run the development server:
-
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+#### App router:
+```javascript
+// src/app/api/[[...routes]]/route.ts
+import { createMutationEndpoint, createQueryEndpoint } from "@/vmarkis/rpc-adapters/app"
+  
+const mutation = createMutationEndpoint()
+const query = createQueryEndpoint()
+  
+export {
+  POST: mutation,
+  PUT: mutation,
+  DELETE: mutation,
+  PATCH: mutation,
+  GET: query
+}
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+#### Pages router:
+```javascript
+// src/pages/[[...routes]]/index.ts
+import { makeRoutesHandler } from "@/vmarkis/rpc-adapters/pages"
 
-You can start editing the page by modifying `pages/index.tsx`. The page auto-updates as you edit the file.
+const handler = makeRoutesHandler()
+export default handler
+```
 
-[API routes](https://nextjs.org/docs/api-routes/introduction) can be accessed on [http://localhost:3000/api/hello](http://localhost:3000/api/hello). This endpoint can be edited in `pages/api/hello.ts`.
+3. Criar procedure (todas nesse mesmo arquivo):
+```javascript
+// src/vmarkis/rpc/rpc.ts
+export const createTodo = Controllers.post(
+  "/todo",
+  z.object({
+    title: z.string().min(1, "Preencha o titulo."),
+    text: z.string().min(1, "Preencha o texto."),
+    is_done: z.coerce.boolean(),
+  }),
+  async (req, input) => {
+    const todo = await prisma.todo.create({
+      data: {
+        is_done: input.is_done,
+        text: input.text,
+        title: input.title,
+      },
+    })
 
-The `pages/api` directory is mapped to `/api/*`. Files in this directory are treated as [API routes](https://nextjs.org/docs/api-routes/introduction) instead of React pages.
+    return ResponseRPC.json(todo)
+  }
+)
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-optimization) to automatically optimize and load Inter, a custom Google Font.
+4. Usar no client:
+```typescript
+import { createTodo } from "@/vmarkis/rpc"
 
-## Learn More
+const submitHandler: SubmitHandler<FormSchema> = async payload => {
+  const todo = await unwrap(
+    createTodo({
+      is_done: payload.is_done,
+      text: payload.text,
+      title: payload.title,
+    })
+  )
+  
+  setTodos(todos => (todos ? [...todos, todo] : [todo]))
+}
+```
 
-To learn more about Next.js, take a look at the following resources:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
 
-## Deploy on Vercel
+# Adendos
+O registro de todos os controllers precisa ser feito antes de uma requisição bater em um endpoint, caso contrário não terá handler para tratar a requisição.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Existe algumas formas de fazer isso, a que eu usei foi fazer com que o arquivo das rotas `(e.g [[...routes]]/index.ts)` tenha uma dependência no arquivo da declaração dos controllers, assim quando ele buildar o handler global das rotas, ele já registra todos os controllers no singleton.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
+Talvez desse pra fazer isso com um script manual que roda antes de export o handler as default, mas não tive tempo de testar isso.
+
+Você poderia até deixar os RPC ao lado de um componente. Em uma pasta `IncreaseCounter` pode ter 2 arquivos, `component.tsx` e `action.ts`, onde action registra uma RPC usada por `component.tsx`. Desde que a declaração/registro da RPC de `action.ts` rode no momento de build do route handler, tudo deve funcionar.
